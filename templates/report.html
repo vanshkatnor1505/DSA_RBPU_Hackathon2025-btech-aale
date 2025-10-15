@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+
+{% block title %}Report Issue - CITY CARE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/report.css') }}">
+<style>
+/* Additional map styles to ensure visibility */
+.map-container {
+    height: 400px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+}
+
+#issueMap {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+}
+
+/* Ensure map tiles load properly */
+.leaflet-container {
+    background: #f8f9fa;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.leaflet-popup-content {
+    margin: 15px;
+    min-width: 250px;
+}
+
+.leaflet-popup-content h3 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.leaflet-popup-content p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>Report an Issue</h1>
+        <p>Help us improve your community by reporting civic issues</p>
+    </div>
+</section>
+
+<!-- Report Form Section -->
+<section class="report-section">
+    <div class="container">
+        <div class="form-container">
+            <div class="form-card">
+                <h2 class="section-title">Issue Details</h2>
+
+                <form id="issueForm">
+                    <div class="form-group">
+                        <label for="issueCategory">Issue Category</label>
+                        <select id="issueCategory" class="form-control" required>
+                            <option value="">Select a category</option>
+                            <option value="roads">Roads & Potholes</option>
+                            <option value="sanitation">Sanitation & Garbage</option>
+                            <option value="streetlights">Streetlights</option>
+                            <option value="water">Water Supply & Leaks</option>
+                            <option value="traffic">Traffic & Signals</option>
+                            <option value="parks">Parks & Recreation</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="issueTitle">Issue Title</label>
+                        <input
+                            type="text"
+                            id="issueTitle"
+                            class="form-control"
+                            placeholder="Brief description of the issue"
+                            required
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="issueDescription">Detailed Description</label>
+                        <textarea
+                            id="issueDescription"
+                            class="form-control"
+                            placeholder="Please provide as much detail as possible about the issue..."
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Urgency Level</label>
+                        <div class="urgency-levels">
+                            <div class="urgency-option low" data-level="low">
+                                <div class="urgency-icon">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div>Low</div>
+                                <small>Minor issue</small>
+                            </div>
+                            <div class="urgency-option medium" data-level="medium">
+                                <div class="urgency-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div>Medium</div>
+                                <small>Needs attention</small>
+                            </div>
+                            <div class="urgency-option high" data-level="high">
+                                <div class="urgency-icon">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </div>
+                                <div>High</div>
+                                <small>Safety concern</small>
+                            </div>
+                        </div>
+                        <input type="hidden" id="urgencyLevel" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Attach Photos or Videos</label>
+                        <div class="file-upload" id="fileUpload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Drag & drop files here or click to browse</p>
+                            <small>Supported formats: JPG, PNG, MP4 (Max 10MB each)</small>
+                            <input
+                                type="file"
+                                id="fileInput"
+                                multiple
+                                accept="image/*,video/*"
+                                style="display: none"
+                            />
+                        </div>
+                        <div class="file-preview" id="filePreview"></div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="form-card">
+                <h2 class="section-title">Location Details</h2>
+
+                <div class="form-group">
+                    <label>Select Location Method</label>
+                    <div class="location-options">
+                        <div class="location-btn active" id="useCurrentLocation">
+                            <i class="fas fa-location-arrow"></i>
+                            <span>Use My Location</span>
+                        </div>
+                        <div class="location-btn" id="pickOnMap">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Pick on Map</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="map-container">
+                    <div id="issueMap"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input
+                        type="text"
+                        id="address"
+                        class="form-control"
+                        placeholder="Street address or landmark"
+                        required
+                    />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="landmark">Nearest Landmark</label>
+                        <input
+                            type="text"
+                            id="landmark"
+                            class="form-control"
+                            placeholder="e.g. Near Central Park"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="ward">Ward Number</label>
+                        <input
+                            type="text"
+                            id="ward"
+                            class="form-control"
+                            placeholder="e.g. Ward 12"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="contactEmail">Contact Email</label>
+                    <input
+                        type="email"
+                        id="contactEmail"
+                        class="form-control"
+                        placeholder="Your email for updates"
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="contactPhone">Contact Phone (Optional)</label>
+                    <input
+                        type="tel"
+                        id="contactPhone"
+                        class="form-control"
+                        placeholder="Your phone number"
+                    />
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline btn-large" id="cancelBtn">
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        form="issueForm"
+                        class="btn btn-accent btn-large"
+                    >
+                        Submit Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nearby Issues Section -->
+        <div class="nearby-issues">
+            <h2 class="section-title">Similar Issues in Your Area</h2>
+            <p>
+                Check if your issue has already been reported by others in your
+                neighborhood.
+            </p>
+
+            <div class="issues-list">
+                <div class="issue-card">
+                    <div
+                        class="issue-image"
+                        style="
+                            background-image: url('https://images.unsplash.com/photo-1572271356578-3d5fa5d4d8c2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');
+                        "
+                    ></div>
+                    <div class="issue-content">
+                        <span class="issue-category">Roads</span>
+                        <h3 class="issue-title">Large pothole on Main Street</h3>
+                        <p>Deep pothole causing traffic issues and vehicle damage</p>
+                        <div class="issue-meta">
+                            <span>0.3 miles away</span>
+                            <span class="issue-status status-in-progress">In Progress</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <div
+                        class="issue-image"
+                        style="
+                            background-image: url('https://images.unsplash.com/photo-1596464716127-f2a82984de30?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');
+                        "
+                    ></div>
+                    <div class="issue-content">
+                        <span class="issue-category">Sanitation</span>
+                        <h3 class="issue-title">Overflowing garbage bins</h3>
+                        <p>Bins haven't been emptied for 4 days, attracting pests</p>
+                        <div class="issue-meta">
+                            <span>0.5 miles away</span>
+                            <span class="issue-status status-submitted">Submitted</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <div
+                        class="issue-image"
+                        style="
+                            background-image: url('https://images.unsplash.com/photo-1519996529937-47d6c1b1cb1c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');
+                        "
+                    ></div>
+                    <div class="issue-content">
+                        <span class="issue-category">Streetlights</span>
+                        <h3 class="issue-title">Flickering streetlight</h3>
+                        <p>Light at corner of 5th and Elm keeps flickering on/off</p>
+                        <div class="issue-meta">
+                            <span>0.7 miles away</span>
+                            <span class="issue-status status-resolved">Resolved</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Initialize map
+let map, marker;
+
+function initMap() {
+    console.log("Initializing map...");
+    
+    // Default coordinates for Jalandhar
+    const defaultLat = 31.5143;
+    const defaultLng = 75.9115;
+
+    try {
+        // Initialize map
+        map = L.map("issueMap").setView([defaultLat, defaultLng], 13);
+
+        // Add tile layer
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        // Add default marker
+        marker = L.marker([defaultLat, defaultLng], { 
+            draggable: true 
+        }).addTo(map);
+
+        // Update address when marker is dragged
+        marker.on("dragend", function () {
+            updateAddressFromMarker();
+        });
+
+        // Update marker when map is clicked
+        map.on("click", function (e) {
+            marker.setLatLng(e.latlng);
+            updateAddressFromMarker();
+        });
+
+        // Set initial address
+        updateAddressFromMarker();
+        
+        console.log("Map initialized successfully");
+
+    } catch (error) {
+        console.error("Error initializing map:", error);
+        document.getElementById("issueMap").innerHTML = 
+            '<div style="padding: 20px; text-align: center; color: #666;">' +
+            '<i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>' +
+            '<p>Unable to load map. Please check your internet connection.</p>' +
+            '</div>';
+    }
+}
+
+// Update address field based on marker position
+function updateAddressFromMarker() {
+    if (marker) {
+        const latlng = marker.getLatLng();
+        document.getElementById("address").value = `Lat: ${latlng.lat.toFixed(4)}, Lng: ${latlng.lng.toFixed(4)}`;
+    }
+}
+
+// Use current location
+document.getElementById("useCurrentLocation").addEventListener("click", function () {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                map.setView([lat, lng], 15);
+                marker.setLatLng([lat, lng]);
+                updateAddressFromMarker();
+
+                // Update active button
+                document.querySelectorAll(".location-btn").forEach((btn) => btn.classList.remove("active"));
+                this.classList.add("active");
+            }.bind(this),
+            function (error) {
+                alert("Location access denied. Please pick a location on the map.");
+            }
+        );
+    } else {
+        alert("Geolocation not supported. Please pick a location on the map.");
+    }
+});
+
+// Pick on map
+document.getElementById("pickOnMap").addEventListener("click", function () {
+    document.querySelectorAll(".location-btn").forEach((btn) => btn.classList.remove("active"));
+    this.classList.add("active");
+});
+
+// Urgency level selection
+document.querySelectorAll(".urgency-option").forEach((option) => {
+    option.addEventListener("click", function () {
+        document.querySelectorAll(".urgency-option").forEach((opt) => opt.classList.remove("active"));
+        this.classList.add("active");
+        document.getElementById("urgencyLevel").value = this.getAttribute("data-level");
+    });
+});
+
+// File upload handling
+const fileInput = document.getElementById("fileInput");
+const fileUpload = document.getElementById("fileUpload");
+const filePreview = document.getElementById("filePreview");
+
+fileUpload.addEventListener("click", function () {
+    fileInput.click();
+});
+
+fileUpload.addEventListener("dragover", function (e) {
+    e.preventDefault();
+    this.style.borderColor = "#3498db";
+    this.style.backgroundColor = "rgba(52, 152, 219, 0.1)";
+});
+
+fileUpload.addEventListener("dragleave", function () {
+    this.style.borderColor = "#ddd";
+    this.style.backgroundColor = "transparent";
+});
+
+fileUpload.addEventListener("drop", function (e) {
+    e.preventDefault();
+    this.style.borderColor = "#ddd";
+    this.style.backgroundColor = "transparent";
+
+    if (e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+    }
+});
+
+fileInput.addEventListener("change", function () {
+    if (this.files.length > 0) {
+        handleFiles(this.files);
+    }
+});
+
+function handleFiles(files) {
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Check file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert(`File ${file.name} is too large. Maximum size is 10MB.`);
+            continue;
+        }
+
+        // Check file type
+        if (!file.type.match("image.*") && !file.type.match("video.*")) {
+            alert(`File ${file.name} is not a supported image or video format.`);
+            continue;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            const fileItem = document.createElement("div");
+            fileItem.className = "file-item";
+
+            if (file.type.match("image.*")) {
+                fileItem.innerHTML = `
+                    <img src="${e.target.result}" alt="${file.name}">
+                    <div class="remove" data-file="${file.name}">&times;</div>
+                `;
+            } else if (file.type.match("video.*")) {
+                fileItem.innerHTML = `
+                    <video src="${e.target.result}" controls></video>
+                    <div class="remove" data-file="${file.name}">&times;</div>
+                `;
+            }
+
+            filePreview.appendChild(fileItem);
+
+            // Add remove functionality
+            fileItem.querySelector(".remove").addEventListener("click", function () {
+                fileItem.remove();
+            });
+        };
+
+        reader.readAsDataURL(file);
+    }
+}
+
+// Form submission
+document.getElementById("issueForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    // Validate form
+    const urgencyLevel = document.getElementById("urgencyLevel").value;
+    if (!urgencyLevel) {
+        alert("Please select an urgency level");
+        return;
+    }
+
+    // Show success message
+    showSuccessMessage("CC-" + Date.now());
+    
+    // Reset form
+    resetForm();
+});
+
+// Cancel button
+document.getElementById("cancelBtn").addEventListener("click", function() {
+    if (confirm("Are you sure you want to cancel? All entered data will be lost.")) {
+        resetForm();
+    }
+});
+
+// Reset form function
+function resetForm() {
+    document.getElementById("issueForm").reset();
+    filePreview.innerHTML = "";
+    document.querySelectorAll(".urgency-option").forEach((opt) => opt.classList.remove("active"));
+    document.querySelectorAll(".location-btn")[0].classList.add("active");
+    
+    // Reset map to default position
+    if (map && marker) {
+        map.setView([31.5143, 75.9115], 13);
+        marker.setLatLng([31.5143, 75.9115]);
+        updateAddressFromMarker();
+    }
+}
+
+// Show success message with report ID
+function showSuccessMessage(reportId) {
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-message';
+    successDiv.innerHTML = `
+        <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #c3e6cb;">
+            <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-check-circle" style="color: #28a745;"></i> 
+                Report Submitted Successfully!
+            </h4>
+            <p style="margin: 5px 0;">Your report ID: <strong>${reportId}</strong></p>
+            <p style="margin: 5px 0; font-size: 0.9rem;">You can use this ID to track your report status.</p>
+        </div>
+    `;
+    
+    const formCard = document.querySelector('.form-card');
+    formCard.parentNode.insertBefore(successDiv, formCard);
+    
+    // Remove success message after 10 seconds
+    setTimeout(() => {
+        successDiv.remove();
+    }, 10000);
+}
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+});
+</script>
+{% endblock %}

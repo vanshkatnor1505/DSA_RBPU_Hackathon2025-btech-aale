@@ -1,0 +1,1044 @@
+{% extends "base.html" %}
+
+{% block title %}Map View - CITY CARE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+/* Map View Specific Styles */
+.map-container {
+    position: relative;
+    height: calc(100vh - 160px);
+    width: 100%;
+}
+
+
+#cityMap {
+    height: 100%;
+    width: 100%;
+}
+
+.map-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+}
+
+.map-controls {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    width: 320px;
+    pointer-events: auto;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.issues-sidebar {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    width: 350px;
+    pointer-events: auto;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.control-group {
+    margin-bottom: 20px;
+}
+
+.control-group h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.filter-option:hover {
+    background-color: #f8f9fa;
+}
+
+.filter-option input {
+    margin: 0;
+}
+
+.filter-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-submitted { background-color: #3498db; }
+.status-in-progress { background-color: #f39c12; }
+.status-resolved { background-color: #27ae60; }
+.status-rejected { background-color: #e74c3c; }
+
+.category-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.category-roads { background-color: #e74c3c; }
+.category-sanitation { background-color: #9b59b6; }
+.category-streetlights { background-color: #f1c40f; }
+.category-water { background-color: #3498db; }
+.category-traffic { background-color: #e67e22; }
+.category-parks { background-color: #2ecc71; }
+.category-other { background-color: #95a5a6; }
+
+.search-box {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 40px 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.search-box i {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7f8c8d;
+}
+
+.heatmap-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #3498db;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-map {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #3498db;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.btn-map:hover {
+    background: #2980b9;
+}
+
+.btn-map.secondary {
+    background: #95a5a6;
+}
+
+.btn-map.secondary:hover {
+    background: #7f8c8d;
+}
+
+
+.issues-list {
+    margin-top: 15px;
+}
+
+.issue-item {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.issue-item:hover {
+    border-color: #3498db;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+}
+
+.issue-item.active {
+    border-color: #3498db;
+    background-color: #f8fafc;
+}
+
+.issue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.issue-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+    line-height: 1.3;
+}
+
+.issue-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.category-tag, .issue-status {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.category-tag {
+    color: white;
+}
+
+.issue-status {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.issue-description {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.issue-distance {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: #7f8c8d;
+}
+
+.legend {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    pointer-events: auto;
+}
+
+.legend h4 {
+    margin: 0 0 10px 0;
+    font-size: 0.9rem;
+    color: #2c3e50;
+}
+
+.legend-items {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.mobile-controls-toggle {
+    display: none;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    background: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+/* Leaflet Custom Styles */
+.leaflet-popup-content {
+    margin: 15px;
+    min-width: 250px;
+}
+
+.leaflet-popup-content h3 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.leaflet-popup-content p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+}
+
+.leaflet-popup-content .btn {
+    margin-top: 10px;
+    width: 100%;
+}
+
+/* Custom Marker Styles */
+.custom-marker {
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Heatmap Styles */
+.heatmap-layer {
+    opacity: 0.7;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .map-overlay {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .map-controls, .issues-sidebar {
+        width: 100%;
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .map-container {
+        height: calc(100vh - 140px);
+    }
+    
+    .mobile-controls-toggle {
+        display: block;
+    }
+    
+    .map-controls, .issues-sidebar {
+        display: none;
+    }
+    
+    .map-controls.expanded, .issues-sidebar.expanded {
+        display: block;
+    }
+    
+    .legend {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-container">
+    <div id="cityMap"></div>
+    
+    <div class="map-overlay">
+        <div class="map-controls" id="mapControls">
+            <div class="search-box">
+                <input type="text" id="searchIssues" placeholder="Search issues...">
+                <i class="fas fa-search"></i>
+            </div>
+            
+            <div class="control-group">
+                <h3><i class="fas fa-filter"></i> Filter by Status</h3>
+                <div class="filter-options">
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterSubmitted" data-status="submitted" checked>
+                        <label for="filterSubmitted" class="filter-label">
+                            <span class="status-indicator status-submitted"></span>
+                            Submitted
+                        </label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterInProgress" data-status="in-progress" checked>
+                        <label for="filterInProgress" class="filter-label">
+                            <span class="status-indicator status-in-progress"></span>
+                            In Progress
+                        </label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterResolved" data-status="resolved">
+                        <label for="filterResolved" class="filter-label">
+                            <span class="status-indicator status-resolved"></span>
+                            Resolved
+                        </label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterRejected" data-status="rejected">
+                        <label for="filterRejected" class="filter-label">
+                            <span class="status-indicator status-rejected"></span>
+                            Rejected
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3><i class="fas fa-tags"></i> Filter by Category</h3>
+                <div class="filter-options">
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterRoads" data-category="roads" checked>
+                        <label for="filterRoads" class="filter-label">
+                            <span class="category-indicator category-roads"></span>
+                            Roads
+                        </label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterSanitation" data-category="sanitation" checked>
+                        <label for="filterSanitation" class="filter-label">
+                            <span class="category-indicator category-sanitation"></span>
+                            Sanitation
+                        </label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterStreetlights" data-category="streetlights" checked>
+                        <label for="filterStreetlights" class="filter-label">
+                            <span class="category-indicator category-streetlights"></span>
+                            Streetlights
+                        </label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterWater" data-category="water" checked>
+                        <label for="filterWater" class="filter-label">
+                            <span class="category-indicator category-water"></span>
+                            Water
+                        </label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterTraffic" data-category="traffic" checked>
+                        <label for="filterTraffic" class="filter-label">
+                            <span class="category-indicator category-traffic"></span>
+                            Traffic
+                        </label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterParks" data-category="parks" checked>
+                        <label for="filterParks" class="filter-label">
+                            <span class="category-indicator category-parks"></span>
+                            Parks
+                        </label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="filterOther" data-category="other" checked>
+                        <label for="filterOther" class="filter-label">
+                            <span class="category-indicator category-other"></span>
+                            Other
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="heatmap-toggle">
+                <span>Heatmap View</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="heatmapToggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn-map" id="locateMe">
+                    <i class="fas fa-location-arrow"></i> Locate Me
+                </button>
+                <button class="btn-map secondary" id="zoomIn">
+                    <i class="fas fa-plus"></i> Zoom In
+                </button>
+                <button class="btn-map secondary" id="zoomOut">
+                    <i class="fas fa-minus"></i> Zoom Out
+                </button>
+            </div>
+        </div>
+        
+        <div class="issues-sidebar" id="issuesSidebar">
+            <h3><i class="fas fa-list"></i> Nearby Issues <span id="nearbyCount">(0)</span></h3>
+            <div class="issues-list" id="nearbyIssues">
+                <!-- Nearby issues will be populated here -->
+            </div>
+        </div>
+    </div>
+    
+    <button class="mobile-controls-toggle" id="mobileControlsToggle">
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    
+    <div class="legend">
+        <h4>Issue Categories</h4>
+        <div class="legend-items">
+            <div class="legend-item">
+                <span class="legend-color category-roads"></span>
+                <span>Roads</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color category-sanitation"></span>
+                <span>Sanitation</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color category-streetlights"></span>
+                <span>Streetlights</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color category-water"></span>
+                <span>Water</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color category-traffic"></span>
+                <span>Traffic</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color category-parks"></span>
+                <span>Parks</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color category-other"></span>
+                <span>Other</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+// Global variables
+let map;
+let markers = [];
+let userLocationMarker;
+let heatmapLayer;
+let issuesData = [];
+
+// Jalandhar coordinates
+const defaultLat = 31.5143;
+const defaultLng = 75.9115;
+
+// Initialize Leaflet Map
+function initMap() {
+    console.log("Initializing Leaflet Map...");
+    
+    // Initialize map
+    map = L.map('cityMap').setView([defaultLat, defaultLng], 13);
+    
+    // Add tile layer (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18
+    }).addTo(map);
+    
+    // Generate sample data and add markers
+    generateSampleData();
+    addMarkersToMap();
+    
+    // Set up map controls
+    setupMapControls();
+
+    // Update nearby issues list
+    updateNearbyIssues();
+}
+
+// Generate sample data for Jalandhar
+function generateSampleData() {
+    const categories = [
+        "roads",
+        "sanitation",
+        "streetlights",
+        "water",
+        "traffic",
+        "parks",
+        "other",
+    ];
+    const statuses = ["submitted", "in-progress", "resolved", "rejected"];
+    const locations = [
+        { lat: 31.5143, lng: 75.9115, name: "Jalandhar City Center" },
+        { lat: 31.525, lng: 75.906, name: "Model Town" },
+        { lat: 31.505, lng: 75.916, name: "Lajpat Nagar" },
+        { lat: 31.52, lng: 75.925, name: "Civil Lines" },
+        { lat: 31.5, lng: 75.9, name: "Basti Sheikh" },
+        { lat: 31.53, lng: 75.89, name: "Adarsh Nagar" },
+        { lat: 31.495, lng: 75.93, name: "Rama Mandi" },
+    ];
+
+    const jalandharIssues = [
+        "Pothole on GT Road near BMC Chowk",
+        "Garbage accumulation in Model Town Market",
+        "Streetlight not working in Lajpat Nagar",
+        "Water leakage near Civil Lines",
+        "Traffic signal malfunction at PAP Chowk",
+        "Broken swings in Company Bagh",
+        "Sewage overflow in Basti Sheikh",
+        "Damaged road near Lovely Professional University",
+        "Illegal parking issues in Adarsh Nagar",
+        "Stray animal problem in Rama Mandi",
+    ];
+
+    issuesData = [];
+
+    for (let i = 0; i < 40; i++) {
+        const location = locations[Math.floor(Math.random() * locations.length)];
+        const category = categories[Math.floor(Math.random() * categories.length)];
+        const status = statuses[Math.floor(Math.random() * statuses.length)];
+        const issueTitle = jalandharIssues[Math.floor(Math.random() * jalandharIssues.length)];
+
+        // Add some random variation to coordinates
+        const lat = location.lat + (Math.random() - 0.5) * 0.02;
+        const lng = location.lng + (Math.random() - 0.5) * 0.02;
+
+        issuesData.push({
+            id: `CC-JAL-2023-${1000 + i}`,
+            title: issueTitle,
+            description: `${issueTitle} needs immediate attention from authorities.`,
+            category: category,
+            status: status,
+            lat: lat,
+            lng: lng,
+            date: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
+            address: `${location.name}, Jalandhar`,
+            urgency: ["low", "medium", "high"][Math.floor(Math.random() * 3)],
+        });
+    }
+}
+
+// Add markers to Leaflet Map
+function addMarkersToMap() {
+    // Clear existing markers
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
+
+    issuesData.forEach((issue) => {
+        const markerColor = getCategoryColor(issue.category);
+        
+        // Create custom marker icon
+        const markerIcon = L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+
+        const marker = L.marker([issue.lat, issue.lng], { icon: markerIcon })
+            .addTo(map)
+            .bindPopup(createPopupContent(issue));
+
+        marker.issueData = issue;
+        markers.push(marker);
+        
+        // Add click event to highlight in sidebar
+        marker.on('click', function() {
+            highlightIssueInSidebar(issue.id);
+        });
+    });
+}
+
+// Get color based on category
+function getCategoryColor(category) {
+    switch (category) {
+        case "roads":
+            return "#e74c3c";
+        case "sanitation":
+            return "#9b59b6";
+        case "streetlights":
+            return "#f1c40f";
+        case "water":
+            return "#3498db";
+        case "traffic":
+            return "#e67e22";
+        case "parks":
+            return "#2ecc71";
+        case "other":
+            return "#95a5a6";
+        default:
+            return "#95a5a6";
+    }
+}
+
+// Create popup content for markers
+function createPopupContent(issue) {
+    return `
+        <div class="popup-content">
+            <h3>${issue.title}</h3>
+            <p><strong>Status:</strong> <span class="issue-status">${issue.status}</span></p>
+            <p><strong>Category:</strong> <span class="category-tag category-${issue.category}">${issue.category}</span></p>
+            <p>${issue.description}</p>
+            <p><strong>Address:</strong> ${issue.address}</p>
+            <p><strong>Reported:</strong> ${issue.date.toLocaleDateString()}</p>
+            <button class="btn btn-primary" onclick="viewIssueDetails('${issue.id}')">View Details</button>
+        </div>
+    `;
+}
+
+// Set up map controls
+function setupMapControls() {
+    // Locate Me button
+    document.getElementById('locateMe').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const pos = [position.coords.latitude, position.coords.longitude];
+
+                // Remove existing user location marker
+                if (userLocationMarker) {
+                    map.removeLayer(userLocationMarker);
+                }
+
+                // Add new user location marker
+                const userIcon = L.divIcon({
+                    className: 'user-location-marker',
+                    html: `<div style="background-color: #e74c3c; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11]
+                });
+
+                userLocationMarker = L.marker(pos, { icon: userIcon })
+                    .addTo(map)
+                    .bindPopup('Your Location')
+                    .openPopup();
+
+                map.setView(pos, 15);
+                updateNearbyIssues();
+            }, function(error) {
+                alert("Unable to retrieve your location. Please ensure location services are enabled.");
+            });
+        } else {
+            alert("Geolocation is not supported by your browser.");
+        }
+    });
+
+    // Zoom controls
+    document.getElementById('zoomIn').addEventListener('click', function() {
+        map.zoomIn();
+    });
+
+    document.getElementById('zoomOut').addEventListener('click', function() {
+        map.zoomOut();
+    });
+
+    // Set up heatmap toggle
+    document.getElementById('heatmapToggle').addEventListener('change', function() {
+        if (this.checked) {
+            enableHeatmap();
+        } else {
+            disableHeatmap();
+        }
+    });
+
+    // Set up search functionality
+    document.getElementById('searchIssues').addEventListener('input', function() {
+        filterMarkers();
+    });
+
+    // Set up filter checkboxes
+    document.querySelectorAll('.filter-option input').forEach((checkbox) => {
+        checkbox.addEventListener('change', filterMarkers);
+    });
+}
+
+// Filter markers based on current filters
+function filterMarkers() {
+    const searchTerm = document.getElementById('searchIssues').value.toLowerCase();
+
+    // Get active status filters
+    const activeStatuses = [];
+    document.querySelectorAll('input[data-status]:checked').forEach((checkbox) => {
+        activeStatuses.push(checkbox.getAttribute('data-status'));
+    });
+
+    // Get active category filters
+    const activeCategories = [];
+    document.querySelectorAll('input[data-category]:checked').forEach((checkbox) => {
+        activeCategories.push(checkbox.getAttribute('data-category'));
+    });
+
+    markers.forEach((marker) => {
+        const issue = marker.issueData;
+        const matchesSearch = searchTerm === '' ||
+            issue.title.toLowerCase().includes(searchTerm) ||
+            issue.description.toLowerCase().includes(searchTerm) ||
+            issue.address.toLowerCase().includes(searchTerm);
+
+        const matchesStatus = activeStatuses.length === 0 || activeStatuses.includes(issue.status);
+        const matchesCategory = activeCategories.length === 0 || activeCategories.includes(issue.category);
+
+        if (matchesSearch && matchesStatus && matchesCategory) {
+            if (!map.hasLayer(marker)) {
+                marker.addTo(map);
+            }
+        } else {
+            if (map.hasLayer(marker)) {
+                map.removeLayer(marker);
+            }
+        }
+    });
+
+    // Update nearby issues list
+    updateNearbyIssues();
+}
+
+// Update nearby issues list
+function updateNearbyIssues() {
+    const nearbyIssuesContainer = document.getElementById('nearbyIssues');
+    const nearbyCount = document.getElementById('nearbyCount');
+
+    // Clear current list
+    nearbyIssuesContainer.innerHTML = '';
+
+    // Get user location or use map center
+    let centerLat, centerLng;
+    if (userLocationMarker) {
+        const pos = userLocationMarker.getLatLng();
+        centerLat = pos.lat;
+        centerLng = pos.lng;
+    } else {
+        const center = map.getCenter();
+        centerLat = center.lat;
+        centerLng = center.lng;
+    }
+
+    // Calculate distances and sort by proximity
+    const issuesWithDistance = issuesData.map((issue) => {
+        const distance = calculateDistance(centerLat, centerLng, issue.lat, issue.lng);
+        return { ...issue, distance };
+    });
+
+    // Sort by distance and take top 5
+    const nearbyIssues = issuesWithDistance
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 5);
+
+    // Update count
+    nearbyCount.textContent = `(${nearbyIssues.length})`;
+
+    // Add issues to list
+    nearbyIssues.forEach((issue) => {
+        const issueElement = document.createElement('div');
+        issueElement.className = 'issue-item';
+        issueElement.setAttribute('data-issue-id', issue.id);
+
+        issueElement.innerHTML = `
+            <div class="issue-header">
+                <div>
+                    <div class="issue-title">${issue.title}</div>
+                    <div class="issue-meta">
+                        <span class="category-tag category-${issue.category}">${issue.category}</span>
+                        <span class="issue-status">${issue.status}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="issue-description">${issue.description}</div>
+            <div class="issue-distance">
+                <i class="fas fa-location-arrow"></i>
+                ${issue.distance < 1 ? `${Math.round(issue.distance * 1000)}m away` : `${issue.distance.toFixed(1)}km away`}
+            </div>
+        `;
+
+        issueElement.addEventListener('click', function() {
+            // Center map on this issue
+            map.setView([issue.lat, issue.lng], 16);
+
+            // Find and open the corresponding marker popup
+            const marker = markers.find(m => m.issueData.id === issue.id);
+            if (marker) {
+                marker.openPopup();
+            }
+
+            // Highlight in sidebar
+            highlightIssueInSidebar(issue.id);
+        });
+
+        nearbyIssuesContainer.appendChild(issueElement);
+    });
+}
+
+// Calculate distance between two coordinates using Haversine formula
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+// Highlight issue in sidebar
+function highlightIssueInSidebar(issueId) {
+    // Remove active class from all issues
+    document.querySelectorAll('.issue-item').forEach((item) => {
+        item.classList.remove('active');
+    });
+
+    // Add active class to selected issue
+    const issueElement = document.querySelector(`.issue-item[data-issue-id="${issueId}"]`);
+    if (issueElement) {
+        issueElement.classList.add('active');
+    }
+}
+
+// View issue details
+function viewIssueDetails(issueId) {
+    alert(`Viewing details for issue: ${issueId}\n\nIn a real application, this would open a detailed view or modal.`);
+}
+
+// Enable heatmap
+function enableHeatmap() {
+    // Create heatmap data points
+    const heatmapData = issuesData.map(issue => {
+        return [issue.lat, issue.lng, 0.5]; // [lat, lng, intensity]
+    });
+    
+    // Create heatmap layer
+    heatmapLayer = L.heatLayer(heatmapData, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 17,
+        gradient: {
+            0.4: 'blue',
+            0.6: 'cyan',
+            0.7: 'lime',
+            0.8: 'yellow',
+            1.0: 'red'
+        }
+    }).addTo(map);
+    
+    // Hide markers when heatmap is active
+    markers.forEach(marker => {
+        if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+        }
+    });
+}
+
+// Disable heatmap
+function disableHeatmap() {
+    if (heatmapLayer) {
+        map.removeLayer(heatmapLayer);
+    }
+    
+    // Show markers again based on current filters
+    filterMarkers();
+}
+
+// Initialize the application when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+    
+    // Set up mobile controls toggle
+    document.getElementById('mobileControlsToggle').addEventListener('click', function() {
+        const controls = document.getElementById('mapControls');
+        const sidebar = document.getElementById('issuesSidebar');
+        
+        controls.classList.toggle('expanded');
+        sidebar.classList.toggle('expanded');
+        
+        this.querySelector('i').classList.toggle('fa-chevron-up');
+        this.querySelector('i').classList.toggle('fa-chevron-down');
+    });
+});
+
+// Make functions globally available for HTML onclick handlers
+window.viewIssueDetails = viewIssueDetails;
+</script>
+{% endblock %}

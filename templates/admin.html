@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - CITY CARE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <style>
+        .admin-login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+        }
+        
+        .admin-login-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+        
+        .admin-logo {
+            font-size: 3rem;
+            color: #e74c3c;
+            margin-bottom: 1rem;
+        }
+        
+        .admin-title {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+        
+        .admin-subtitle {
+            color: #7f8c8d;
+            margin-bottom: 2rem;
+        }
+        
+        .admin-form .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        
+        .admin-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .admin-form .form-control {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-form .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .admin-login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        
+        .admin-login-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .back-to-home {
+            color: #7f8c8d;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s ease;
+        }
+        
+        .back-to-home:hover {
+            color: #3498db;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-login-container">
+        <div class="admin-login-card">
+            <div class="admin-logo">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            
+            <h1 class="admin-title">Admin Portal</h1>
+            <p class="admin-subtitle">Secure access to City Care administration</p>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            
+            <form class="admin-form" id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminName">
+                        <i class="fas fa-user"></i> Admin Name
+                    </label>
+                    <input 
+                        type="text" 
+                        id="adminName" 
+                        class="form-control" 
+                        placeholder="Enter admin name"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminSecretKey">
+                        <i class="fas fa-key"></i> Secret Key
+                    </label>
+                    <input 
+                        type="password" 
+                        id="adminSecretKey" 
+                        class="form-control" 
+                        placeholder="Enter secret key"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="rememberMe">
+                    <label for="rememberMe" style="margin: 0;">Remember me</label>
+                </div>
+                
+                <button type="submit" class="admin-login-btn">
+                    <i class="fas fa-lock"></i> Access Admin Panel
+                </button>
+            </form>
+            
+            <a href="/" class="back-to-home">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Admin credentials
+        const adminCredentials = [
+            { name: "admin", secretKey: "admin123" },
+            { name: "citycare", secretKey: "citycare2024" },
+            { name: "administrator", secretKey: "admin@123" },
+            { name: "superadmin", secretKey: "super@2024" },
+            { name: "vansh", secretKey: "team-btech aale" }
+        ];
+
+        // DOM elements
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // Show message function
+        function showMessage(element, message) {
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle admin login
+        async function handleAdminLogin(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('adminName').value;
+            const secretKey = document.getElementById('adminSecretKey').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            // Simple validation
+            if (!name || !secretKey) {
+                showMessage(errorMessage, "Please fill in all fields");
+                return;
+            }
+
+            // Check admin credentials
+            const isValidAdmin = adminCredentials.some(cred => 
+                cred.name.toLowerCase() === name.toLowerCase() && 
+                cred.secretKey === secretKey
+            );
+
+            if (isValidAdmin) {
+                // Store admin session
+                const adminData = {
+                    id: 999,
+                    name: name.charAt(0).toUpperCase() + name.slice(1),
+                    email: `${name}@citycare.gov`,
+                    role: "Administrator",
+                    loggedIn: true,
+                    timestamp: Date.now()
+                };
+
+                localStorage.setItem("adminSession", JSON.stringify(adminData));
+                
+                if (rememberMe) {
+                    localStorage.setItem("adminRememberMe", "true");
+                }
+
+                showMessage(successMessage, "✓ Login successful! Redirecting to admin panel...");
+
+                // Redirect to admin dashboard after short delay
+                setTimeout(() => {
+                    window.location.href = "/dashboard";
+                }, 1500);
+
+            } else {
+                showMessage(errorMessage, "❌ Invalid admin credentials. Please try again.");
+            }
+        }
+
+        // Check if already logged in
+        function checkExistingSession() {
+            const adminSession = localStorage.getItem("adminSession");
+            if (adminSession) {
+                const sessionData = JSON.parse(adminSession);
+                // Check if session is still valid (less than 24 hours old)
+                const sessionAge = Date.now() - sessionData.timestamp;
+                if (sessionAge < 24 * 60 * 60 * 1000) {
+                    window.location.href = "/dashboard";
+                } else {
+                    localStorage.removeItem("adminSession");
+                }
+            }
+        }
+
+        // Event listeners
+        adminLoginForm.addEventListener('submit', handleAdminLogin);
+
+        // Clear messages when user starts typing
+        document.getElementById('adminName').addEventListener('input', () => {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        });
+
+        document.getElementById('adminSecretKey').addEventListener('input', () => {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        });
+
+        // Check for existing session on page load
+        document.addEventListener('DOMContentLoaded', checkExistingSession);
+    </script>
+</body>
+</html>

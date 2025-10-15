@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Home - CITY CARE{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container hero-content">
+        <h2>Your Voice Matters in Building a Better City</h2>
+        <p>Report civic issues, track their resolution, and contribute to community improvement with our comprehensive platform.</p>
+        <div class="hero-buttons">
+            <a href="/report" class="btn btn-primary btn-large">Report an Issue</a>
+            <a href="/viewmap" class="btn btn-accent btn-large">View Issues Map</a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Key Features</h2>
+                <p>Discover how City Care empowers citizens and authorities to work together for a cleaner, safer community.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h3>User Account & Profile</h3>
+                    <p>Register, login, and manage your profile with multi-language support and notification preferences.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-flag"></i>
+                    </div>
+                    <h3>Issue Reporting</h3>
+                    <p>Submit complaints with photos, location, and categorization. Avoid duplicates with nearby reports.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3>Issue Tracking</h3>
+                    <p>Monitor complaint status from submission to resolution. Receive updates and provide feedback.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <h3>Interactive Map</h3>
+                    <p>View all reported issues on an interactive city map with filtering options and directions.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Community Interaction</h3>
+                    <p>Comment on issues, upvote important ones, and participate in neighborhood discussions.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3>Notifications & Alerts</h3>
+                    <p>Get real-time alerts about road closures, maintenance work, and emergency situations.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section" style="background-color: #f5f7fa">
+        <div class="container">
+            <div class="section-title">
+                <h2>How It Works</h2>
+                <p>Simple steps to report and resolve civic issues in your community</p>
+            </div>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Report an Issue</h3>
+                    <p>Take a photo, add location, and describe the problem using our app or website.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Issue Categorization</h3>
+                    <p>Our system automatically categorizes and routes your report to the right department.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Track Progress</h3>
+                    <p>Monitor the status of your report and receive updates as it moves toward resolution.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Confirm Resolution</h3>
+                    <p>Verify the fix and provide feedback to help improve city services.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container stats-container">
+            <div class="stat-item">
+                <h3>25,847</h3>
+                <p>Issues Reported</p>
+            </div>
+
+            <div class="stat-item">
+                <h3>18,932</h3>
+                <p>Issues Resolved</p>
+            </div>
+
+            <div class="stat-item">
+                <h3>73%</h3>
+                <p>Resolution Rate</p>
+            </div>
+
+            <div class="stat-item">
+                <h3>4.2</h3>
+                <p>Average Rating</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section testimonials">
+        <div class="container">
+            <div class="section-title">
+                <h2>What Citizens Say</h2>
+                <p>Hear from people who have used City Care to improve their communities</p>
+            </div>
+
+            <div class="testimonial-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-text">
+                        "I reported a large pothole on my street and it was fixed within 3 days! The tracking feature kept me updated throughout the process."
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">RS</div>
+                        <div class="author-info">
+                            <h4>Robert Smith</h4>
+                            <p>Downtown Resident</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-text">
+                        "The community feature helped us organize a neighborhood cleanup. We identified problem areas on the map and worked together to fix them."
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">MJ</div>
+                        <div class="author-info">
+                            <h4>Maria Johnson</h4>
+                            <p>Community Leader</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-text">
+                        "As a city worker, this platform has streamlined our workflow. We can prioritize issues based on urgency and community impact."
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">DW</div>
+                        <div class="author-info">
+                            <h4>David Wilson</h4>
+                            <p>Public Works Department</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to Make a Difference in Your Community?</h2>
+            <p>Join thousands of citizens who are actively improving their neighborhoods through City Care.</p>
+            <div class="hero-buttons">
+                <a href="/report" class="btn btn-primary btn-large">Get Started Now</a>
+                <a href="/community" class="btn btn-outline btn-large">Join Community</a>
+            </div>
+        </div>
+    </section>
+
+<!-- Rest of your home page content -->
+{% endblock %}

@@ -1,0 +1,974 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - CITY CARE{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hide regular navigation and show only admin-specific elements */
+    .header-container nav,
+    .auth-buttons,
+    .user-menu {
+        display: none !important;
+    }
+    
+    .admin-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+    
+    .admin-actions-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .admin-dashboard {
+        padding: 2rem 0;
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+    
+    .admin-header {
+        background: white;
+        padding: 2rem 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .admin-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .admin-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+        border-left: 4px solid var(--secondary);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--secondary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .admin-actions {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .action-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .action-card:hover {
+        border-color: var(--secondary);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    
+    .action-icon {
+        font-size: 2rem;
+        color: var(--secondary);
+        margin-bottom: 1rem;
+    }
+    
+    .reports-section, .users-section, .analytics-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        display: none;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .reports-grid, .users-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .admin-report-card, .user-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border-left: 4px solid var(--secondary);
+        transition: all 0.3s ease;
+    }
+    
+    .admin-report-card:hover, .user-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .report-header, .user-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .report-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .report-meta, .user-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.9rem;
+        color: #666;
+        flex-wrap: wrap;
+    }
+    
+    .status-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-progress { background: #cce7ff; color: #004085; }
+    .status-resolved { background: #d4edda; color: #155724; }
+    
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .chart-container {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .chart-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--primary);
+    }
+    
+    .stats-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem;
+        background: white;
+        border-radius: 4px;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 12px;
+        width: 80%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .close-modal {
+        float: right;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #666;
+    }
+    
+    .loading-indicator {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #666;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Override the header content for admin -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Hide regular navigation elements
+        const headerContainer = document.querySelector('.header-container');
+        if (headerContainer) {
+            // Hide navigation and auth buttons
+            const nav = headerContainer.querySelector('nav');
+            const authButtons = headerContainer.querySelector('.auth-buttons');
+            const userMenu = headerContainer.querySelector('.user-menu');
+            
+            if (nav) nav.style.display = 'none';
+            if (authButtons) authButtons.style.display = 'none';
+            if (userMenu) userMenu.style.display = 'none';
+            
+            // Create admin-specific navbar structure
+            const logo = headerContainer.querySelector('.logo');
+            const adminActionsContainer = document.createElement('div');
+            adminActionsContainer.className = 'admin-actions-container';
+            
+            adminActionsContainer.innerHTML = `
+                <span style="margin-right: 1rem; color: #666; font-weight: 500;">
+                    <i class="fas fa-user-shield"></i> Admin Panel
+                </span>
+                <button class="btn btn-danger" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            `;
+            
+            // Clear existing content and add admin navbar
+            headerContainer.innerHTML = '';
+            headerContainer.appendChild(logo);
+            headerContainer.appendChild(adminActionsContainer);
+        }
+    });
+</script>
+
+<div class="admin-dashboard">
+    <div class="admin-header">
+        <div class="container">
+            <div class="admin-nav">
+                <h1><i class="fas fa-cog"></i> Admin Dashboard</h1>
+                <div>
+                    <span style="margin-right: 1rem; color: #666;">Welcome, Admin!</span>
+                    <button class="btn btn-danger" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Statistics -->
+        <div class="admin-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalReports">{{ total_reports }}</div>
+                <div class="stat-label">Total Reports</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingReports">{{ pending_reports }}</div>
+                <div class="stat-label">Pending Reports</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="resolvedReports">{{ resolved_reports }}</div>
+                <div class="stat-label">Resolved Reports</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">{{ total_users }}</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="admin-actions">
+            <h2>Quick Actions</h2>
+            <div class="actions-grid">
+                <div class="action-card" onclick="showSection('reports')">
+                    <div class="action-icon">
+                        <i class="fas fa-list-alt"></i>
+                    </div>
+                    <h3>Manage Reports</h3>
+                    <p>Browse and manage all submitted issues</p>
+                </div>
+                <div class="action-card" onclick="showSection('users')">
+                    <div class="action-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Manage Users</h3>
+                    <p>View and manage user accounts</p>
+                </div>
+                <div class="action-card" onclick="showSection('analytics')">
+                    <div class="action-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>View Analytics</h3>
+                    <p>See platform statistics and trends</p>
+                </div>
+                <div class="action-card" onclick="openSettings()">
+                    <div class="action-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h3>System Settings</h3>
+                    <p>Configure platform settings</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="reports-section" id="reportsSection">
+            <div class="section-header">
+                <h2>Manage Reports</h2>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="loadAllReports()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button class="btn btn-secondary" onclick="showSection('dashboard')">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                </div>
+            </div>
+            
+            <div class="reports-grid" id="reportsGrid">
+                <div class="loading-indicator">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Loading reports...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Section -->
+        <div class="users-section" id="usersSection">
+            <div class="section-header">
+                <h2>Manage Users</h2>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="loadUsers()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button class="btn btn-secondary" onclick="showSection('dashboard')">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                </div>
+            </div>
+            
+            <div class="users-grid" id="usersGrid">
+                <div class="loading-indicator">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Loading users...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="analytics-section" id="analyticsSection">
+            <div class="section-header">
+                <h2>Platform Analytics</h2>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="loadAnalytics()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button class="btn btn-secondary" onclick="showSection('dashboard')">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                </div>
+            </div>
+            
+            <div class="analytics-grid" id="analyticsGrid">
+                <div class="loading-indicator">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Loading analytics...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Detail Modal -->
+<div class="modal" id="reportModal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('reportModal')">&times;</span>
+        <h2>Report Details</h2>
+        <div id="reportModalContent">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal" id="settingsModal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('settingsModal')">&times;</span>
+        <h2>System Settings</h2>
+        <div id="settingsContent">
+            <div class="form-group">
+                <label>Platform Name</label>
+                <input type="text" class="form-control" value="CityCare" id="platformName">
+            </div>
+            <div class="form-group">
+                <label>Admin Email</label>
+                <input type="email" class="form-control" value="admin@citycare.com" id="adminEmail">
+            </div>
+            <div class="form-group">
+                <label>Auto-refresh Interval (minutes)</label>
+                <input type="number" class="form-control" value="5" id="refreshInterval">
+            </div>
+            <div class="form-group">
+                <button class="btn btn-primary" onclick="saveSettings()">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Check admin authentication
+    document.addEventListener('DOMContentLoaded', function() {
+        const adminSession = localStorage.getItem("adminSession");
+        if (!adminSession) {
+            alert("Please login to access admin panel");
+            window.location.href = "/admin";
+        }
+        
+        // Show dashboard by default
+        showSection('dashboard');
+    });
+
+    function logout() {
+        localStorage.removeItem("adminSession");
+        window.location.href = "/admin";
+    }
+
+    function showSection(sectionName) {
+        // Hide all sections
+        document.querySelectorAll('.reports-section, .users-section, .analytics-section').forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // Show selected section
+        if (sectionName === 'reports') {
+            document.getElementById('reportsSection').style.display = 'block';
+            loadAllReports();
+        } else if (sectionName === 'users') {
+            document.getElementById('usersSection').style.display = 'block';
+            loadUsers();
+        } else if (sectionName === 'analytics') {
+            document.getElementById('analyticsSection').style.display = 'block';
+            loadAnalytics();
+        } else {
+            // Show dashboard (stats and actions)
+            document.querySelector('.admin-stats').style.display = 'grid';
+            document.querySelector('.admin-actions').style.display = 'block';
+        }
+    }
+
+    // Reports Management
+    async function loadAllReports() {
+        try {
+            showLoading('reportsGrid');
+            const response = await fetch('/api/admin/reports');
+            const data = await response.json();
+            
+            if (data.success) {
+                displayReports(data.reports);
+            } else {
+                showError('reportsGrid', 'Failed to load reports: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error loading reports:', error);
+            showError('reportsGrid', 'Failed to load reports. Please try again.');
+        }
+    }
+
+    function displayReports(reports) {
+        const reportsGrid = document.getElementById('reportsGrid');
+        
+        if (!reports || reports.length === 0) {
+            reportsGrid.innerHTML = '<div class="empty-state">No reports found</div>';
+            return;
+        }
+
+        const reportsHTML = reports.map(report => {
+            const statusClass = getStatusClass(report.status);
+            const createdDate = new Date(report.created_at).toLocaleDateString();
+            
+            return `
+                <div class="admin-report-card">
+                    <div class="report-header">
+                        <div>
+                            <div class="report-title">${escapeHtml(report.title || 'Untitled Report')}</div>
+                            <div class="report-meta">
+                                <span><strong>Category:</strong> ${escapeHtml(report.category || 'General')}</span>
+                                <span><strong>Date:</strong> ${createdDate}</span>
+                                <span><strong>Urgency:</strong> ${escapeHtml(report.urgency_level || 'medium')}</span>
+                                <span><strong>Email:</strong> ${escapeHtml(report.contact_email || 'N/A')}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status-badge ${statusClass}">${formatStatus(report.status)}</span>
+                        </div>
+                    </div>
+                    <div class="report-content">
+                        <p>${escapeHtml(report.description || 'No description provided')}</p>
+                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn-outline btn-sm" onclick="viewReportDetails('${report.id}')">
+                                <i class="fas fa-eye"></i> View Details
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="updateStatus('${report.id}')">
+                                <i class="fas fa-edit"></i> Update Status
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteReport('${report.id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        reportsGrid.innerHTML = reportsHTML;
+    }
+
+    async function viewReportDetails(reportId) {
+        try {
+            const response = await fetch(`/api/admin/reports/${reportId}/details`);
+            const data = await response.json();
+            
+            if (data.success) {
+                displayReportModal(data.report);
+            } else {
+                alert('Failed to load report details: ' + data.message);
+            }
+        } catch (error) {
+            alert('Failed to load report details. Please try again.');
+        }
+    }
+
+    function displayReportModal(report) {
+        const modalContent = document.getElementById('reportModalContent');
+        const createdDate = new Date(report.created_at).toLocaleString();
+        const updatedDate = new Date(report.updated_at).toLocaleString();
+        
+        modalContent.innerHTML = `
+            <div class="report-details">
+                <h3>${escapeHtml(report.title)}</h3>
+                <div class="detail-item">
+                    <strong>Description:</strong>
+                    <p>${escapeHtml(report.description)}</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Category:</strong> ${escapeHtml(report.category)}
+                </div>
+                <div class="detail-item">
+                    <strong>Status:</strong> <span class="status-badge ${getStatusClass(report.status)}">${formatStatus(report.status)}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Urgency:</strong> ${escapeHtml(report.urgency_level)}
+                </div>
+                <div class="detail-item">
+                    <strong>Location:</strong> ${escapeHtml(report.address)}
+                </div>
+                <div class="detail-item">
+                    <strong>Landmark:</strong> ${escapeHtml(report.landmark || 'N/A')}
+                </div>
+                <div class="detail-item">
+                    <strong>Ward:</strong> ${escapeHtml(report.ward || 'N/A')}
+                </div>
+                <div class="detail-item">
+                    <strong>Contact Email:</strong> ${escapeHtml(report.contact?.email || report.contact_email)}
+                </div>
+                <div class="detail-item">
+                    <strong>Contact Phone:</strong> ${escapeHtml(report.contact?.phone || report.contact_phone || 'N/A')}
+                </div>
+                <div class="detail-item">
+                    <strong>Created:</strong> ${createdDate}
+                </div>
+                <div class="detail-item">
+                    <strong>Last Updated:</strong> ${updatedDate}
+                </div>
+                <div class="detail-item">
+                    <strong>Upvotes:</strong> ${report.upvotes || 0}
+                </div>
+                <div class="detail-item">
+                    <strong>Comments:</strong> ${report.comments_count || 0}
+                </div>
+                
+                ${report.comments && report.comments.length > 0 ? `
+                    <div class="detail-item">
+                        <strong>Comments:</strong>
+                        <div class="comments-list" style="margin-top: 0.5rem;">
+                            ${report.comments.map(comment => `
+                                <div class="comment" style="padding: 0.5rem; background: #f8f9fa; margin-bottom: 0.5rem; border-radius: 4px;">
+                                    <strong>${escapeHtml(comment.user_name)}:</strong>
+                                    <p style="margin: 0.25rem 0 0 0;">${escapeHtml(comment.text)}</p>
+                                    <small>${new Date(comment.created_at).toLocaleString()}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        document.getElementById('reportModal').style.display = 'block';
+    }
+
+    async function updateStatus(reportId) {
+        const newStatus = prompt('Enter new status (submitted, in-progress, resolved):');
+        
+        if (newStatus && ['submitted', 'in-progress', 'resolved'].includes(newStatus)) {
+            try {
+                const response = await fetch(`/api/admin/reports/${reportId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Status updated successfully!');
+                    loadAllReports();
+                } else {
+                    alert('Failed to update status: ' + data.message);
+                }
+            } catch (error) {
+                alert('Failed to update status. Please try again.');
+            }
+        } else if (newStatus) {
+            alert('Invalid status. Please use: submitted, in-progress, or resolved');
+        }
+    }
+
+    async function deleteReport(reportId) {
+        if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+            try {
+                const response = await fetch(`/api/admin/reports/${reportId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Report deleted successfully!');
+                    loadAllReports();
+                } else {
+                    alert('Failed to delete report: ' + data.message);
+                }
+            } catch (error) {
+                alert('Failed to delete report. Please try again.');
+            }
+        }
+    }
+
+    // Users Management
+    async function loadUsers() {
+        try {
+            showLoading('usersGrid');
+            const response = await fetch('/api/admin/users');
+            const data = await response.json();
+            
+            if (data.success) {
+                displayUsers(data.users);
+            } else {
+                showError('usersGrid', 'Failed to load users: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error loading users:', error);
+            showError('usersGrid', 'Failed to load users. Please try again.');
+        }
+    }
+
+    function displayUsers(users) {
+        const usersGrid = document.getElementById('usersGrid');
+        
+        if (!users || users.length === 0) {
+            usersGrid.innerHTML = '<div class="empty-state">No users found</div>';
+            return;
+        }
+
+        const usersHTML = users.map(user => {
+            const lastActivity = new Date(user.last_activity).toLocaleDateString();
+            const joinedDate = new Date(user.joined_date).toLocaleDateString();
+            
+            return `
+                <div class="user-card">
+                    <div class="user-header">
+                        <div>
+                            <div class="report-title">${escapeHtml(user.email)}</div>
+                            <div class="user-meta">
+                                <span><strong>Reports Submitted:</strong> ${user.report_count}</span>
+                                <span><strong>Last Active:</strong> ${lastActivity}</span>
+                                <span><strong>Joined:</strong> ${joinedDate}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status-badge status-progress">Active User</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-outline btn-sm" onclick="viewUserReports('${user.email}')">
+                            <i class="fas fa-list"></i> View Reports
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="contactUser('${user.email}')">
+                            <i class="fas fa-envelope"></i> Contact
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        usersGrid.innerHTML = usersHTML;
+    }
+
+    function viewUserReports(email) {
+        alert(`Would show all reports by: ${email}`);
+        // You can implement filtering reports by user email
+    }
+
+    function contactUser(email) {
+        window.location.href = `mailto:${email}`;
+    }
+
+    // Analytics Management
+    async function loadAnalytics() {
+        try {
+            showLoading('analyticsGrid');
+            const response = await fetch('/api/admin/analytics');
+            const data = await response.json();
+            
+            if (data.success) {
+                displayAnalytics(data.analytics);
+            } else {
+                showError('analyticsGrid', 'Failed to load analytics: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error loading analytics:', error);
+            showError('analyticsGrid', 'Failed to load analytics. Please try again.');
+        }
+    }
+
+    function displayAnalytics(analytics) {
+        const analyticsGrid = document.getElementById('analyticsGrid');
+        
+        let analyticsHTML = `
+            <div class="chart-container">
+                <div class="chart-title">Reports by Category</div>
+                <div class="stats-list">
+                    ${analytics.categories.map(cat => `
+                        <div class="stat-item">
+                            <span>${escapeHtml(cat.category)}</span>
+                            <span><strong>${cat.count}</strong></span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Reports by Status</div>
+                <div class="stats-list">
+                    ${analytics.status.map(stat => `
+                        <div class="stat-item">
+                            <span>${formatStatus(stat.status)}</span>
+                            <span><strong>${stat.count}</strong></span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Reports by Urgency</div>
+                <div class="stats-list">
+                    ${analytics.urgency.map(urg => `
+                        <div class="stat-item">
+                            <span>${escapeHtml(urg.urgency_level)}</span>
+                            <span><strong>${urg.count}</strong></span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        if (analytics.wards && analytics.wards.length > 0) {
+            analyticsHTML += `
+                <div class="chart-container">
+                    <div class="chart-title">Top Wards by Reports</div>
+                    <div class="stats-list">
+                        ${analytics.wards.map(ward => `
+                            <div class="stat-item">
+                                <span>${escapeHtml(ward.ward)}</span>
+                                <span><strong>${ward.count}</strong></span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (analytics.recent_activity && analytics.recent_activity.length > 0) {
+            analyticsHTML += `
+                <div class="chart-container">
+                    <div class="chart-title">Recent Activity (Last 7 Days)</div>
+                    <div class="stats-list">
+                        ${analytics.recent_activity.map(activity => `
+                            <div class="stat-item">
+                                <span>${activity.date}</span>
+                                <span><strong>${activity.report_count} reports</strong></span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        analyticsGrid.innerHTML = analyticsHTML;
+    }
+
+    // Settings Management
+    function openSettings() {
+        document.getElementById('settingsModal').style.display = 'block';
+    }
+
+    function saveSettings() {
+        const platformName = document.getElementById('platformName').value;
+        const adminEmail = document.getElementById('adminEmail').value;
+        const refreshInterval = document.getElementById('refreshInterval').value;
+        
+        // Save settings to localStorage (you can send to server instead)
+        localStorage.setItem('adminSettings', JSON.stringify({
+            platformName,
+            adminEmail,
+            refreshInterval
+        }));
+        
+        alert('Settings saved successfully!');
+        closeModal('settingsModal');
+    }
+
+    // Utility Functions
+    function getStatusClass(status) {
+        const statusMap = {
+            'submitted': 'status-pending',
+            'in-progress': 'status-progress',
+            'resolved': 'status-resolved'
+        };
+        return statusMap[status] || 'status-pending';
+    }
+
+    function formatStatus(status) {
+        const statusMap = {
+            'submitted': 'Submitted',
+            'in-progress': 'In Progress',
+            'resolved': 'Resolved'
+        };
+        return statusMap[status] || status;
+    }
+
+    function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function showLoading(elementId) {
+        document.getElementById(elementId).innerHTML = `
+            <div class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading...</span>
+            </div>
+        `;
+    }
+
+    function showError(elementId, message) {
+        document.getElementById(elementId).innerHTML = `
+            <div class="empty-state" style="color: #dc3545;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>${message}</p>
+            </div>
+        `;
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        document.querySelectorAll('.modal').forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

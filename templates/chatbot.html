@@ -1,0 +1,925 @@
+{% extends "base.html" %}
+
+{% block title %}AI Assistant - CITY CARE{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary: #2c3e50;
+    --secondary: #3498db;
+    --accent: #e74c3c;
+    --light: #ecf0f1;
+    --dark: #2c3e50;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+.chatbot-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.chat-header {
+    background: var(--primary);
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.chat-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.chat-header h1 i {
+    color: var(--secondary);
+}
+
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.language-selector {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
+.language-selector option {
+    background: var(--primary);
+    color: white;
+}
+
+.chat-messages {
+    height: 500px;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: #f8f9fa;
+}
+
+.message {
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.user-message {
+    text-align: right;
+}
+
+.user-message p {
+    background: var(--secondary);
+    color: white;
+    padding: 0.8rem 1.2rem;
+    border-radius: 18px 18px 4px 18px;
+    display: inline-block;
+    max-width: 80%;
+    margin: 0;
+}
+
+.bot-message p {
+    background: white;
+    color: var(--dark);
+    padding: 0.8rem 1.2rem;
+    border-radius: 18px 18px 18px 4px;
+    border: 1px solid #e0e0e0;
+    max-width: 80%;
+    margin: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.message-time {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 0.3rem;
+}
+
+.quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.quick-reply {
+    background: var(--light);
+    border: 1px solid #ddd;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.quick-reply:hover {
+    background: var(--secondary);
+    color: white;
+    border-color: var(--secondary);
+}
+
+.navigation-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.navigation-action {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.navigation-action:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 1rem;
+}
+
+.typing-dot {
+    width: 8px;
+    height: 8px;
+    background: #999;
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+.chat-input-container {
+    padding: 1.5rem;
+    border-top: 1px solid #e0e0e0;
+    background: white;
+}
+
+.input-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    resize: none;
+    max-height: 120px;
+    min-height: 50px;
+}
+
+.chat-input:focus {
+    outline: none;
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.send-button {
+    background: var(--secondary);
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.send-button:hover:not(:disabled) {
+    background: #2980b9;
+    transform: scale(1.05);
+}
+
+.send-button:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+}
+
+.voice-button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.voice-button:hover {
+    background: #c0392b;
+    transform: scale(1.05);
+}
+
+.voice-button.listening {
+    background: #e74c3c;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+}
+
+.voice-status {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    color: #856404;
+}
+
+.voice-status i {
+    color: #f39c12;
+}
+
+.features-list {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.features-list li {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .chatbot-container {
+        margin: 1rem;
+        border-radius: 8px;
+    }
+    
+    .chat-messages {
+        height: 400px;
+        padding: 1rem;
+    }
+    
+    .user-message p,
+    .bot-message p {
+        max-width: 90%;
+    }
+    
+    .quick-replies,
+    .navigation-actions {
+        flex-direction: column;
+    }
+    
+    .input-group {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .chat-input {
+        border-radius: 12px;
+    }
+    
+    .send-button,
+    .voice-button {
+        width: 100%;
+        height: 45px;
+        border-radius: 12px;
+    }
+}
+
+/* Voice recognition styles */
+.voice-wave {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 10px;
+}
+
+.voice-bar {
+    width: 3px;
+    height: 20px;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: voiceWave 1.5s ease-in-out infinite;
+}
+
+.voice-bar:nth-child(2) { animation-delay: 0.2s; }
+.voice-bar:nth-child(3) { animation-delay: 0.4s; }
+.voice-bar:nth-child(4) { animation-delay: 0.6s; }
+.voice-bar:nth-child(5) { animation-delay: 0.8s; }
+
+@keyframes voiceWave {
+    0%, 100% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chatbot-container">
+    <div class="chat-header">
+        <h1><i class="fas fa-robot"></i> CityCare AI Assistant</h1>
+        <div class="status-bar">
+            <span id="statusText">Online</span>
+            <select id="languageSelect" class="language-selector">
+                <option value="en">English</option>
+                <option value="hi">हिन्दी</option>
+                <option value="bn">বাংলা</option>
+                <option value="te">తెలుగు</option>
+                <option value="mr">मराठी</option>
+                <option value="ta">தமிழ்</option>
+                <option value="ur">اردو</option>
+                <option value="gu">ગુજરાતી</option>
+                <option value="kn">ಕನ್ನಡ</option>
+                <option value="ml">മലയാളം</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <!-- Messages will be inserted here -->
+    </div>
+
+    <div class="chat-input-container">
+        <div class="voice-status" id="voiceStatus">
+            <i class="fas fa-microphone"></i>
+            <span id="voiceStatusText">Listening...</span>
+            <div class="voice-wave">
+                <div class="voice-bar"></div>
+                <div class="voice-bar"></div>
+                <div class="voice-bar"></div>
+                <div class="voice-bar"></div>
+                <div class="voice-bar"></div>
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <textarea 
+                id="chatInput" 
+                class="chat-input" 
+                placeholder="Type your message here..."
+                rows="1"
+            ></textarea>
+            <button id="voiceButton" class="voice-button" title="Voice Input">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button id="sendButton" class="send-button" disabled title="Send Message">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Enhanced Chatbot with Real Conversation and Voice Support
+class CityCareChatbot {
+    constructor() {
+        this.initializeElements();
+        this.setupEventListeners();
+        this.initSpeechRecognition();
+        this.showWelcomeMessage();
+    }
+
+    initializeElements() {
+        this.chatMessages = document.getElementById("chatMessages");
+        this.chatInput = document.getElementById("chatInput");
+        this.sendButton = document.getElementById("sendButton");
+        this.voiceButton = document.getElementById("voiceButton");
+        this.voiceStatus = document.getElementById("voiceStatus");
+        this.voiceStatusText = document.getElementById("voiceStatusText");
+        this.languageSelect = document.getElementById("languageSelect");
+        this.statusText = document.getElementById("statusText");
+
+        this.recognition = null;
+        this.isListening = false;
+        this.currentLanguage = 'en';
+        this.conversationHistory = [];
+    }
+
+    // Enhanced translations with more context
+    translations = {
+        en: {
+            welcome: "Hello! I'm your CityCare Assistant powered by AI. I can help you with:",
+            features: [
+                "Reporting civic issues like potholes, garbage problems",
+                "Checking status of your reported issues",
+                "Finding city services and departments",
+                "Answering questions about city governance",
+                "Providing information about local regulations and schedules"
+            ],
+            prompt: "What would you like to know about city services today?",
+            quickReplies: [
+                "Report a pothole",
+                "Garbage collection schedule", 
+                "Water supply issues",
+                "Property tax payment",
+                "Track my complaint"
+            ],
+            placeholder: "Ask me about city services...",
+            listening: "Listening... Speak now",
+            online: "Online - AI Assistant",
+            voiceError: "Sorry, I couldn't understand. Please try again or type your message.",
+            voiceNotSupported: "Voice input not supported. Please use text input.",
+            processing: "Processing your request...",
+            thinking: "Let me check that for you..."
+        },
+        hi: { /* Hindi translations */ },
+        bn: { /* Bengali translations */ },
+        // ... other languages (same structure as before)
+    };
+
+    setupEventListeners() {
+        this.sendButton.addEventListener('click', () => this.handleSendMessage());
+        
+        this.chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.handleSendMessage();
+            }
+        });
+
+        this.chatInput.addEventListener('input', () => {
+            this.sendButton.disabled = !this.chatInput.value.trim();
+            this.autoResizeTextarea();
+        });
+
+        this.voiceButton.addEventListener('click', () => this.toggleVoiceInput());
+        this.languageSelect.addEventListener('change', (e) => this.changeLanguage(e.target.value));
+    }
+
+    autoResizeTextarea() {
+        this.chatInput.style.height = 'auto';
+        this.chatInput.style.height = Math.min(this.chatInput.scrollHeight, 120) + 'px';
+    }
+
+    initSpeechRecognition() {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            this.recognition = new SpeechRecognition();
+            this.recognition.continuous = false;
+            this.recognition.interimResults = false;
+            this.recognition.lang = this.getLanguageCode(this.currentLanguage);
+
+            this.recognition.onstart = () => {
+                this.isListening = true;
+                this.voiceButton.classList.add('listening');
+                this.voiceStatus.style.display = 'flex';
+                this.voiceStatusText.textContent = this.getTranslation('listening');
+            };
+
+            this.recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                this.chatInput.value = transcript;
+                this.processMessage(transcript);
+            };
+
+            this.recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                this.addMessage(this.getTranslation('voiceError'), false);
+            };
+
+            this.recognition.onend = () => {
+                this.isListening = false;
+                this.voiceButton.classList.remove('listening');
+                this.voiceStatus.style.display = 'none';
+            };
+        } else {
+            this.voiceButton.style.display = 'none';
+            this.addMessage(this.getTranslation('voiceNotSupported'), false);
+        }
+    }
+
+    getLanguageCode(lang) {
+        const codes = {
+            'en': 'en-US',
+            'hi': 'hi-IN',
+            'bn': 'bn-IN',
+            'te': 'te-IN',
+            'mr': 'mr-IN',
+            'ta': 'ta-IN',
+            'ur': 'ur-IN',
+            'gu': 'gu-IN',
+            'kn': 'kn-IN',
+            'ml': 'ml-IN'
+        };
+        return codes[lang] || 'en-US';
+    }
+
+    toggleVoiceInput() {
+        if (!this.recognition) {
+            this.initSpeechRecognition();
+            return;
+        }
+        
+        if (this.isListening) {
+            this.recognition.stop();
+        } else {
+            this.recognition.start();
+        }
+    }
+
+    getTranslation(key) {
+        return this.translations[this.currentLanguage]?.[key] || this.translations.en[key] || key;
+    }
+
+    changeLanguage(lang) {
+        this.currentLanguage = lang;
+        if (this.recognition) {
+            this.recognition.lang = this.getLanguageCode(lang);
+        }
+        this.updateUIForLanguage();
+    }
+
+    updateUIForLanguage() {
+        const t = this.translations[this.currentLanguage] || this.translations.en;
+        this.chatInput.placeholder = t.placeholder;
+        this.statusText.textContent = t.online;
+    }
+
+    showWelcomeMessage() {
+        const t = this.translations[this.currentLanguage] || this.translations.en;
+        
+        const welcomeHTML = `
+            <p>${t.welcome}</p>
+            <ul class="features-list">
+                ${t.features.map(feature => `<li>${feature}</li>`).join('')}
+            </ul>
+            <p><strong>${t.prompt}</strong></p>
+            <div class="quick-replies">
+                ${t.quickReplies.map((text, index) => 
+                    `<div class="quick-reply" data-question="${text}">${text}</div>`
+                ).join('')}
+            </div>
+        `;
+
+        this.addMessage(welcomeHTML, false);
+
+        // Attach event listeners to quick replies
+        setTimeout(() => {
+            document.querySelectorAll('.quick-reply').forEach(el => {
+                el.addEventListener('click', () => {
+                    const question = el.getAttribute('data-question');
+                    if (question) this.processMessage(question);
+                });
+            });
+        }, 100);
+    }
+
+    addMessage(content, isUser = false, actions = []) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        let messageHTML = `<p>${content}</p>`;
+        
+        if (actions.length > 0) {
+            messageHTML += '<div class="navigation-actions">';
+            actions.forEach(action => {
+                messageHTML += `<a href="${action.url}" class="navigation-action">${action.text}</a>`;
+            });
+            messageHTML += '</div>';
+        }
+        
+        messageHTML += `<div class="message-time">${time}</div>`;
+        
+        messageDiv.innerHTML = messageHTML;
+        this.chatMessages.appendChild(messageDiv);
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    }
+
+    showTypingIndicator() {
+        if (!document.getElementById('typingIndicator')) {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <span style="margin-left: 10px; color: #666; font-size: 0.9rem;">${this.getTranslation('thinking')}</span>
+            `;
+            this.chatMessages.appendChild(typingDiv);
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        }
+    }
+
+    hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typingIndicator');
+        if (typingIndicator) typingIndicator.remove();
+    }
+
+    async handleSendMessage() {
+        const message = this.chatInput.value.trim();
+        if (!message) return;
+
+        this.processMessage(message);
+        this.chatInput.value = '';
+        this.sendButton.disabled = true;
+        this.chatInput.style.height = 'auto';
+    }
+
+    async processMessage(message) {
+        this.addMessage(message, true);
+        this.showTypingIndicator();
+
+        // Add to conversation history
+        this.conversationHistory.push({ role: 'user', content: message });
+
+        try {
+            const response = await this.getAIResponse(message);
+            this.hideTypingIndicator();
+            
+            // Add bot response to history
+            this.conversationHistory.push({ role: 'assistant', content: response.text });
+
+            this.addMessage(response.text, false, response.actions || []);
+
+        } catch (error) {
+            this.hideTypingIndicator();
+            console.error('Chat error:', error);
+            const fallbackResponse = this.getFallbackResponse(message);
+            this.addMessage(fallbackResponse.text, false, fallbackResponse.actions);
+        }
+    }
+
+    async getAIResponse(userMessage) {
+        try {
+            // Try to call your backend API first
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: userMessage,
+                    language: this.currentLanguage,
+                    history: this.conversationHistory.slice(-6) // Last 3 exchanges
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return {
+                    text: data.reply,
+                    actions: data.actions || this.getNavigationActions(userMessage)
+                };
+            }
+        } catch (error) {
+            console.log('Falling back to local AI logic');
+        }
+
+        // Fallback to intelligent local processing
+        return this.generateLocalResponse(userMessage);
+    }
+
+    generateLocalResponse(userMessage) {
+        const lowerMessage = userMessage.toLowerCase();
+        const context = this.analyzeContext(lowerMessage);
+
+        let response = '';
+        let actions = [];
+
+        // Enhanced intent recognition with context awareness
+        if (this.isReportingIntent(lowerMessage)) {
+            response = this.getReportingResponse(context);
+            actions = this.getReportingActions();
+        } 
+        else if (this.isTrackingIntent(lowerMessage)) {
+            response = this.getTrackingResponse(context);
+            actions = this.getTrackingActions();
+        }
+        else if (this.isServiceIntent(lowerMessage)) {
+            response = this.getServiceResponse(context);
+            actions = this.getServiceActions(context);
+        }
+        else if (this.isEmergencyIntent(lowerMessage)) {
+            response = this.getEmergencyResponse(context);
+            actions = this.getEmergencyActions();
+        }
+        else {
+            response = this.getGeneralResponse(userMessage, context);
+            actions = this.getGeneralActions();
+        }
+
+        return { text: response, actions };
+    }
+
+    analyzeContext(message) {
+        return {
+            isUrgent: message.includes('emergency') || message.includes('urgent') || message.includes('immediately'),
+            hasLocation: message.includes('near') || message.includes('location') || message.includes('area'),
+            isQuestion: message.includes('?') || message.includes('what') || message.includes('how') || message.includes('when'),
+            category: this.detectCategory(message)
+        };
+    }
+
+    detectCategory(message) {
+        const categories = {
+            roads: ['pothole', 'road', 'street', 'repair', 'damage'],
+            sanitation: ['garbage', 'waste', 'trash', 'clean', 'dirty'],
+            water: ['water', 'supply', 'leak', 'pipe', 'drainage'],
+            electricity: ['light', 'power', 'electric', 'streetlight'],
+            tax: ['tax', 'payment', 'property', 'bill']
+        };
+
+        for (const [category, keywords] of Object.entries(categories)) {
+            if (keywords.some(keyword => message.includes(keyword))) {
+                return category;
+            }
+        }
+        return 'general';
+    }
+
+    // Intent detection methods
+    isReportingIntent(message) {
+        const reportingKeywords = ['report', 'complaint', 'issue', 'problem', 'broken', 'damaged'];
+        return reportingKeywords.some(keyword => message.includes(keyword));
+    }
+
+    isTrackingIntent(message) {
+        const trackingKeywords = ['track', 'status', 'check', 'update', 'progress'];
+        return trackingKeywords.some(keyword => message.includes(keyword));
+    }
+
+    isServiceIntent(message) {
+        const serviceKeywords = ['service', 'schedule', 'time', 'when', 'how to', 'where'];
+        return serviceKeywords.some(keyword => message.includes(keyword));
+    }
+
+    isEmergencyIntent(message) {
+        const emergencyKeywords = ['emergency', 'urgent', 'immediately', 'danger', 'hazard'];
+        return emergencyKeywords.some(keyword => message.includes(keyword));
+    }
+
+    // Response generation methods
+    getReportingResponse(context) {
+        const responses = {
+            roads: "I can help you report road issues like potholes or road damage. Please provide the exact location and any details about the problem.",
+            sanitation: "For garbage or sanitation issues, I'll help you file a report. Could you describe the problem and location?",
+            water: "Water supply issues are important. Let me help you report this. Please share the location and nature of the problem.",
+            electricity: "I can assist with street light or power issues. Please provide the location and details of the problem.",
+            general: "I can help you report this issue to the authorities. Please describe what happened and the location."
+        };
+
+        const baseResponse = responses[context.category] || responses.general;
+        
+        if (context.isUrgent) {
+            return `🚨 ${baseResponse} This appears to be urgent - I'll prioritize your report.`;
+        }
+        
+        return baseResponse;
+    }
+
+    getTrackingResponse(context) {
+        return "I can help you track your reported issues. You can check the status of all your complaints in the tracking section.";
+    }
+
+    getServiceResponse(context) {
+        const services = {
+            garbage: "Garbage collection schedules vary by area. Typically, collections happen twice a week. I can check your specific area's schedule.",
+            water: "Water supply schedules depend on your zone. Most areas receive water for 2-4 hours daily. I can provide your area's timing.",
+            tax: "Property tax payments are due quarterly. You can pay online through our portal or at designated collection centers."
+        };
+
+        return services[context.category] || "I can provide information about various city services. What specific service are you interested in?";
+    }
+
+    getEmergencyResponse(context) {
+        return "🚨 For emergency situations, please contact our emergency helpline immediately at 1-800-CITY-CARE. I can also help you file an urgent report.";
+    }
+
+    getGeneralResponse(message, context) {
+        const greetings = ['hello', 'hi', 'hey', 'namaste'];
+        if (greetings.some(greet => message.includes(greet))) {
+            return "Hello! I'm here to help with all your city service needs. How can I assist you today?";
+        }
+
+        return `I understand you're asking about: "${message}". As your CityCare assistant, I can help you with reporting issues, tracking complaints, finding services, and answering questions about city governance. What specific assistance do you need?`;
+    }
+
+    // Action generation methods
+    getReportingActions() {
+        return [
+            { text: "📝 Report Issue", url: "/report" },
+            { text: "📍 View on Map", url: "/viewmap" },
+            { text: "ℹ️ Guidelines", url: "/guide" }
+        ];
+    }
+
+    getTrackingActions() {
+        return [
+            { text: "📊 Track Issues", url: "/track" },
+            { text: "🗺️ View All Reports", url: "/viewmap" },
+            { text: "📋 My Reports", url: "/my-reports" }
+        ];
+    }
+
+    getServiceActions(context) {
+        const actions = [
+            { text: "🏢 Services", url: "/services" },
+            { text: "📞 Contact", url: "/contacts" }
+        ];
+
+        if (context.category === 'tax') {
+            actions.unshift({ text: "💳 Pay Tax", url: "/services#tax" });
+        }
+
+        return actions;
+    }
+
+    getEmergencyActions() {
+        return [
+            { text: "🚨 Emergency Report", url: "/report?emergency=true" },
+            { text: "📞 Call Helpline", url: "tel:1-800-CITY-CARE" },
+            { text: "🏥 Emergency Services", url: "/emergency" }
+        ];
+    }
+
+    getGeneralActions() {
+        return [
+            { text: "📝 Report Issue", url: "/report" },
+            { text: "📊 Track Status", url: "/track" },
+            { text: "🗺️ View Map", url: "/viewmap" },
+            { text: "👥 Community", url: "/community" }
+        ];
+    }
+
+    getFallbackResponse(message) {
+        return {
+            text: "I'm here to help you with city services! I can assist with reporting issues, tracking complaints, finding services, and answering questions. How can I help you today?",
+            actions: this.getGeneralActions()
+        };
+    }
+
+    getNavigationActions(message) {
+        // Default navigation based on message content
+        if (message.toLowerCase().includes('report')) {
+            return this.getReportingActions();
+        } else if (message.toLowerCase().includes('track')) {
+            return this.getTrackingActions();
+        } else {
+            return this.getGeneralActions();
+        }
+    }
+}
+
+// Initialize chatbot when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.chatbot = new CityCareChatbot();
+});
+
+// Make chatbot globally accessible
+window.CityCareChatbot = CityCareChatbot;
+</script>
+{% endblock %}
